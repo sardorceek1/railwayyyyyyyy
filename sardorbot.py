@@ -79,6 +79,37 @@ def main_menu():
         resize_keyboard=True
     )
 
+
+def import_backup_sql():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        # backup.sql faylini o‘qish
+        backup_file_path = "/app/backup.sql"
+        if not os.path.exists(backup_file_path):
+            print("backup.sql fayli topilmadi!")
+            return
+
+        with open(backup_file_path, 'r', encoding='utf-8') as file:
+            sql_script = file.read()
+
+        # SQL buyruqlarini alohida qismlarga bo‘lish
+        sql_commands = sql_script.split(';')
+
+        # Har bir buyruqni bajarish
+        for command in sql_commands:
+            command = command.strip()
+            if command:
+                cursor.execute(command)
+
+        conn.commit()
+        print("backup.sql fayli muvaffaqiyatli import qilindi!")
+    except Exception as e:
+        print(f"backup.sql import qilishda xatolik: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
 # Ortga qaytish tugmasi
 def back_to_main_menu():
     return ReplyKeyboardMarkup(
@@ -840,6 +871,7 @@ async def approve_withdrawal(call: CallbackQuery):
         await call.answer("❌ Siz admin emassiz!", show_alert=True)
                 
 async def main():
+    import_backup_sql()  # Yangi qator
     create_referal_table()  
     await dp.start_polling(bot)
 
